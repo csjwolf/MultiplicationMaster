@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Practice</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); /* Colorful gradient background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #fff;
+        }
+        .app-container {
+            background-color: rgba(255, 255, 255, 0.15); /* Semi-transparent background */
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .screen {
+            display: none; /* Hidden by default */
+        }
+        .screen.active {
+            display: block; /* Shown when active */
+        }
+        .btn {
+            @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75;
+        }
+        .btn-green {
+            @apply bg-green-600 hover:bg-green-700;
+        }
+        .btn-red {
+            @apply bg-red-600 hover:bg-red-700;
+        }
+        .btn-purple {
+            @apply bg-purple-600 hover:bg-purple-700;
+        }
+        /* Specific style for player name input text color */
+        #playerNameInput, #masteryLevelSelect {
+            color: #000000; /* Black text for player name input and select */
+        }
+        input[type="text"], input[type="number"], select {
+            @apply bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg p-3 w-full mb-4 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50;
+        }
+        input[type="range"] {
+            @apply w-full h-2 bg-white bg-opacity-30 rounded-lg appearance-none cursor-pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            @apply w-5 h-5 bg-blue-600 rounded-full shadow-lg;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-moz-range-thumb {
+            @apply w-5 h-5 bg-blue-600 rounded-full shadow-lg;
+        }
+        /* Disabled state for range inputs */
+        input[type="range"]:disabled {
+            @apply opacity-50 cursor-not-allowed;
+        }
+
+        .message-box {
+            /* Changed from hidden to always present but with opacity/visibility control */
+            @apply bg-white bg-opacity-20 p-4 rounded-lg mt-4 text-center text-lg font-semibold;
+            min-height: 60px; /* Reserve space to prevent jumps */
+            opacity: 0; /* Start hidden */
+            visibility: hidden; /* Hide from screen readers when not visible */
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; /* Smooth transition */
+            display: flex; /* Use flex to center message vertically */
+            justify-content: center;
+            align-items: center;
+        }
+        .message-box.show {
+            opacity: 1; /* Show */
+            visibility: visible; /* Make visible */
+        }
+        .choice-btn {
+            @apply bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75;
+        }
+        .choice-btn.correct {
+            @apply bg-green-500;
+        }
+        .choice-btn.incorrect {
+            @apply bg-red-500;
+        }
+        .top-scorer-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .top-scorer-list li {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        .top-scorer-list li:first-child {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #fcd34d; /* Yellow for the top scorer */
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen active p-4">
+            <h1 class="text-4xl font-bold mb-6 text-white">Multiplication Master</h1>
+            <div class="mb-6 bg-white bg-opacity-20 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-2">Top Scorers:</h2>
+                <ul id="topScorerList" class="top-scorer-list">
+                    <!-- Top scorers will be displayed here by JavaScript -->
+                    <li>No Top Scorers Yet</li>
+                </ul>
+            </div>
+            <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="25" class="mb-4">
+            <select id="masteryLevelSelect" class="mb-4">
+                <option value="Beginner">Beginner (0-3)</option>
+                <option value="Intermediate">Intermediate (0-6)</option>
+                <option value="Master">Master (0-9)</option>
+                <option value="Custom">Custom</option>
+            </select>
+            <div class="grid grid-cols-1 gap-4">
+                <button id="startButton" class="btn btn-green">Start Practice</button>
+                <button id="settingsButton" class="btn">Settings</button>
+                <button id="resetButton" class="btn btn-red">Reset Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen p-4">
+            <div class="flex justify-between items-center mb-6">
+                <p class="text-lg font-semibold">Level: <span id="currentLevelDisplay" class="text-yellow-300">1</span></p>
+                <p class="text-lg font-semibold text-yellow-300" id="playerNameGameDisplay"></p> <!-- Player name display -->
+                <p class="text-lg font-semibold">Coins: <span id="coinsDisplay" class="text-yellow-300">0</span></p>
+            </div>
+            <div class="bg-white bg-opacity-20 p-6 rounded-lg mb-8">
+                <p class="text-5xl font-bold mb-4" id="questionDisplay">?</p>
+                <p class="text-3xl font-bold text-yellow-300" id="timerDisplay">01:00</p>
+            </div>
+            <!-- Answer choices wrapped in a new box -->
+            <div class="bg-white bg-opacity-20 p-4 rounded-lg mb-6">
+                <div id="choicesContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Choices will be injected here by JavaScript -->
+                </div>
+            </div>
+            <!-- Message box is now always present with min-height -->
+            <div id="messageBox" class="message-box"></div>
+            <button id="backToStartButton" class="btn mt-6">Back to Start</button>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen p-4">
+            <h2 class="text-3xl font-bold mb-6 text-white">Settings</h2>
+            <div class="mb-6">
+                <label for="minMultiplier" class="block text-lg font-semibold mb-2">Min Multiplier: <span id="minMultiplierValue">0</span></label>
+                <input type="range" id="minMultiplier" min="0" max="9" value="0" class="mb-4">
+
+                <label for="maxMultiplier" class="block text-lg font-semibold mb-2">Max Multiplier: <span id="maxMultiplierValue">9</span></label>
+                <input type="range" id="maxMultiplier" min="0" max="9" value="9" class="mb-4">
+
+                <label for="minMultiplicand" class="block text-lg font-semibold mb-2">Min Multiplicand: <span id="minMultiplicandValue">0</span></label>
+                <input type="range" id="minMultiplicand" min="0" max="9" value="0" class="mb-4">
+
+                <label for="maxMultiplicand" class="block text-lg font-semibold mb-2">Max Multiplicand: <span id="maxMultiplicandValue">9</span></label>
+                <input type="range" id="maxMultiplicand" min="0" max="9" value="9" class="mb-4">
+
+                <label for="timerDurationInput" class="block text-lg font-semibold mb-2">Game Duration (minutes): <span id="timerDurationValue">1</span></label>
+                <input type="range" id="timerDurationInput" min="1" max="10" value="1" class="mb-4">
+            </div>
+            <!-- New box for settings buttons -->
+            <div class="bg-white bg-opacity-20 p-4 rounded-lg flex flex-col sm:flex-row justify-between gap-4">
+                <button id="saveSettingsButton" class="btn btn-green flex-grow">Save Settings</button>
+                <button id="backFromSettingsButton" class="btn flex-grow">Back to Start</button>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-sm text-white text-opacity-70">
+            Created by Cali Stacy E. Javillonar, Primary 3, made on July 22 2025.
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const startScreen = document.getElementById('startScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const settingsScreen = document.getElementById('settingsScreen');
+
+        const playerNameInput = document.getElementById('playerNameInput');
+        const masteryLevelSelect = document.getElementById('masteryLevelSelect'); // New: Mastery Level dropdown
+        const topScorerList = document.getElementById('topScorerList');
+        const startButton = document.getElementById('startButton');
+        const settingsButton = document.getElementById('settingsButton');
+        const resetButton = document.getElementById('resetButton');
+
+        const currentLevelDisplay = document.getElementById('currentLevelDisplay');
+        const coinsDisplay = document.getElementById('coinsDisplay');
+        const playerNameGameDisplay = document.getElementById('playerNameGameDisplay');
+        const questionDisplay = document.getElementById('questionDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const choicesContainer = document.getElementById('choicesContainer');
+        const messageBox = document.getElementById('messageBox');
+        const backToStartButton = document.getElementById('backToStartButton');
+
+        const minMultiplierInput = document.getElementById('minMultiplier');
+        const maxMultiplierInput = document.getElementById('maxMultiplier');
+        const minMultiplicandInput = document.getElementById('minMultiplicand');
+        const maxMultiplicandInput = document.getElementById('maxMultiplicand');
+        const minMultiplierValue = document.getElementById('minMultiplierValue');
+        const maxMultiplierValue = document.getElementById('maxMultiplierValue');
+        const minMultiplicandValue = document.getElementById('minMultiplicandValue');
+        const maxMultiplicandValue = document.getElementById('maxMultiplicandValue');
+        const timerDurationInput = document.getElementById('timerDurationInput');
+        const timerDurationValue = document.getElementById('timerDurationValue');
+        const saveSettingsButton = document.getElementById('saveSettingsButton');
+        const backFromSettingsButton = document.getElementById('backFromSettingsButton');
+
+        // Game State Variables (initial defaults)
+        let playerName = '';
+        let currentLevel = 1;
+        let coins = 0;
+        let correctStreak = 0;
+        let multiplierRange = { min: 0, max: 9 }; // Default settings
+        let multiplicandRange = { min: 0, max: 9 }; // Default settings
+        let gameTimerDuration = 1; // Default 1 minute
+        let timeRemaining = 0;
+        let timerInterval = null;
+        let currentQuestion = { factor1: 0, factor2: 0, answer: 0 };
+        let topScorers = []; // Array of { name: 'Player', coins: 100, masteryLevel: 'Master', level: 7 }
+        let masteryLevel = 'Master'; // Default mastery level
+
+        // Define mastery level presets
+        const MASTERY_LEVELS = {
+            'Beginner': { multiplier: { min: 0, max: 3 }, multiplicand: { min: 0, max: 3 } },
+            'Intermediate': { multiplier: { min: 0, max: 6 }, multiplicand: { min: 0, max: 6 } },
+            'Master': { multiplier: { min: 0, max: 9 }, multiplicand: { min: 0, max: 9 } },
+            'Custom': { multiplier: { min: 0, max: 9 }, multiplicand: { min: 0, max: 9 } } // Custom will use current slider values
+        };
+
+        // --- Local Storage Keys ---
+        const LOCAL_STORAGE_PLAYER_NAME = 'multiplicationAppLastPlayerName';
+        const LOCAL_STORAGE_ALL_PLAYER_DATA = 'multiplicationAppAllPlayersData';
+        const LOCAL_STORAGE_TOP_SCORERS = 'multiplicationAppTopScorers';
+
+        // Store all player data in a map: { "playerName": { level, coins, settings }, ... }
+        let allPlayersData = {};
+
+        // --- Helper Functions ---
+
+        /**
+         * Shows a specific screen and hides others.
+         * @param {HTMLElement} screenToShow The screen element to display.
+         */
+        function showScreen(screenToShow) {
+            const allScreens = [startScreen, gameScreen, settingsScreen];
+            allScreens.forEach(screen => screen.classList.remove('active'));
+            screenToShow.classList.add('active');
+        }
+
+        /**
+         * Saves current game data for the active player to local storage.
+         */
+        function saveGameData() {
+            if (!playerName) return;
+
+            allPlayersData[playerName] = {
+                currentLevel,
+                coins,
+                correctStreak,
+                multiplierRange,
+                multiplicandRange,
+                gameTimerDuration,
+                masteryLevel // Save mastery level
+            };
+            localStorage.setItem(LOCAL_STORAGE_ALL_PLAYER_DATA, JSON.stringify(allPlayersData));
+            localStorage.setItem(LOCAL_STORAGE_PLAYER_NAME, playerName);
+        }
+
+        /**
+         * Loads game data from local storage for the active player.
+         */
+        function loadGameData() {
+            // 1. Load all player data
+            const savedAllPlayersData = localStorage.getItem(LOCAL_STORAGE_ALL_PLAYER_DATA);
+            if (savedAllPlayersData) {
+                allPlayersData = JSON.parse(savedAllPlayersData);
+            } else {
+                allPlayersData = {};
+            }
+
+            // 2. Determine current player name (from last session)
+            const savedPlayerName = localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME);
+            if (savedPlayerName) {
+                playerName = savedPlayerName;
+                playerNameInput.value = playerName;
+            } else {
+                playerName = '';
+                playerNameInput.value = '';
+            }
+
+            // 3. Load data for the current player, or reset to defaults if new/no data
+            const currentPlayerData = allPlayersData[playerName];
+            if (currentPlayerData) {
+                currentLevel = currentPlayerData.currentLevel || 1;
+                coins = currentPlayerData.coins || 0;
+                correctStreak = currentPlayerData.correctStreak || 0;
+                multiplierRange = currentPlayerData.multiplierRange || MASTERY_LEVELS['Master'].multiplier;
+                multiplicandRange = currentPlayerData.multiplicandRange || MASTERY_LEVELS['Master'].multiplicand;
+                gameTimerDuration = currentPlayerData.gameTimerDuration || 1;
+                masteryLevel = currentPlayerData.masteryLevel || 'Master'; // Load mastery level
+            } else {
+                // Reset to default if no data for this player (new player or data cleared)
+                currentLevel = 1;
+                coins = 0;
+                correctStreak = 0;
+                multiplierRange = MASTERY_LEVELS['Master'].multiplier;
+                multiplicandRange = MASTERY_LEVELS['Master'].multiplicand;
+                gameTimerDuration = 1;
+                masteryLevel = 'Master'; // Default to Master for new players
+            }
+
+            // 4. Load top scorers
+            const savedTopScorers = localStorage.getItem(LOCAL_STORAGE_TOP_SCORERS);
+            if (savedTopScorers) {
+                topScorers = JSON.parse(savedTopScorers);
+            } else {
+                topScorers = [];
+            }
+
+            updateTopScorerDisplay();
+            updateSettingsUI();
+            updateScoreDisplay();
+            updateTimerDisplay();
+        }
+
+        /**
+         * Updates the top scorer display on the start screen.
+         */
+        function updateTopScorerDisplay() {
+            topScorerList.innerHTML = ''; // Clear previous list
+
+            if (topScorers.length > 0) {
+                // Sort by coins descending
+                topScorers.sort((a, b) => b.coins - a.coins);
+
+                // Display top 3
+                for (let i = 0; i < Math.min(topScorers.length, 3); i++) {
+                    const scorer = topScorers[i];
+                    const listItem = document.createElement('li');
+                    // Display mastery level and level achieved
+                    listItem.textContent = `${i + 1}. ${scorer.name}: ${scorer.coins} Coins (${scorer.masteryLevel || 'N/A'}, Level ${scorer.level || 1})`;
+                    topScorerList.appendChild(listItem);
+                }
+            } else {
+                const listItem = document.createElement('li');
+                listItem.textContent = 'No Top Scorers Yet';
+                topScorerList.appendChild(listItem);
+            }
+        }
+
+        /**
+         * Updates the top scorers array and saves to local storage.
+         */
+        function updateTopScorers() {
+            if (playerName && coins > 0) {
+                const existingIndex = topScorers.findIndex(s => s.name === playerName);
+                if (existingIndex !== -1) {
+                    // Update existing player's score if higher, and update mastery level and level
+                    if (coins > topScorers[existingIndex].coins) {
+                        topScorers[existingIndex].coins = coins;
+                        topScorers[existingIndex].masteryLevel = masteryLevel;
+                        topScorers[existingIndex].level = currentLevel; // Store current level
+                    }
+                } else {
+                    // Add new player with their current mastery level and level
+                    topScorers.push({ name: playerName, coins: coins, masteryLevel: masteryLevel, level: currentLevel });
+                }
+                localStorage.setItem(LOCAL_STORAGE_TOP_SCORERS, JSON.stringify(topScorers));
+                updateTopScorerDisplay();
+            }
+        }
+
+        /**
+         * Updates the level, coins, and player name display on the game screen.
+         */
+        function updateScoreDisplay() {
+            currentLevelDisplay.textContent = currentLevel;
+            coinsDisplay.textContent = coins;
+            playerNameGameDisplay.textContent = playerName;
+        }
+
+        /**
+         * Displays a temporary message in the message box.
+         * @param {string} message The message to display.
+         * @param {string} type 'success' or 'error' for styling.
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('bg-green-500', 'bg-red-500');
+
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-500');
+            }
+            messageBox.classList.add('bg-opacity-20', 'show');
+
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 2000);
+        }
+
+        /**
+         * Generates a new multiplication question and its choices.
+         */
+        function generateQuestion() {
+            const factor1 = Math.floor(Math.random() * (multiplierRange.max - multiplierRange.min + 1)) + multiplierRange.min;
+            const factor2 = Math.floor(Math.random() * (multiplicandRange.max - multiplicandRange.min + 1)) + multiplicandRange.min;
+            const answer = factor1 * factor2;
+
+            currentQuestion = { factor1, factor2, answer };
+            questionDisplay.textContent = `${factor1} x ${factor2} = ?`;
+
+            const choices = new Set();
+            choices.add(answer);
+
+            while (choices.size < 3) {
+                let incorrectChoice;
+                const offset = Math.floor(Math.random() * 10) - 5;
+                incorrectChoice = Math.max(0, answer + offset);
+
+                if (!choices.has(incorrectChoice) && incorrectChoice !== answer) {
+                    choices.add(incorrectChoice);
+                }
+            }
+
+            const shuffledChoices = Array.from(choices).sort(() => Math.random() - 0.5);
+            renderChoices(shuffledChoices);
+        }
+
+        /**
+         * Renders the answer choice buttons.
+         * @param {number[]} choicesArray An array of numbers to display as choices.
+         */
+        function renderChoices(choicesArray) {
+            choicesContainer.innerHTML = '';
+            choicesArray.forEach(choice => {
+                const button = document.createElement('button');
+                button.textContent = choice;
+                button.classList.add('choice-btn');
+                if (timeRemaining > 0) {
+                    button.addEventListener('click', () => checkAnswer(choice));
+                } else {
+                    button.disabled = true;
+                }
+                choicesContainer.appendChild(button);
+            });
+        }
+
+        /**
+         * Checks the player's answer.
+         * @param {number} selectedAnswer The answer chosen by the player.
+         */
+        function checkAnswer(selectedAnswer) {
+            if (timeRemaining <= 0) {
+                return;
+            }
+
+            if (selectedAnswer === currentQuestion.answer) {
+                coins += currentLevel;
+                correctStreak++;
+                showMessage('Correct! + ' + currentLevel + ' Coins!', 'success');
+                updateScoreDisplay();
+                checkLevelUp();
+            } else {
+                correctStreak = 0;
+                showMessage('Incorrect. Try again!', 'error');
+            }
+            saveGameData();
+            generateQuestion();
+        }
+
+        /**
+         * Checks if the player should level up.
+         */
+        function checkLevelUp() {
+            let requiredStreak = 0;
+            if (currentLevel === 1) {
+                requiredStreak = 5;
+            } else if (currentLevel >= 2 && currentLevel < 10) {
+                requiredStreak = 10;
+            }
+
+            if (currentLevel < 10 && correctStreak >= requiredStreak) {
+                currentLevel++;
+                correctStreak = 0;
+                showMessage(`Level Up! You are now Level ${currentLevel}!`, 'success');
+                updateScoreDisplay();
+                saveGameData();
+            } else if (currentLevel === 10 && correctStreak >= 10) {
+                showMessage('Congratulations! You have reached the maximum level (10)!', 'success');
+            }
+        }
+
+        /**
+         * Updates the timer display.
+         */
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        /**
+         * Starts the game timer.
+         */
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeRemaining = gameTimerDuration * 60;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        /**
+         * Ends the game when the timer runs out.
+         */
+        function endGame() {
+            showMessage("Time's Up! Game Over!", 'error');
+            choicesContainer.querySelectorAll('.choice-btn').forEach(button => {
+                button.disabled = true;
+            });
+            updateTopScorers();
+            setTimeout(() => {
+                showScreen(startScreen);
+            }, 3000);
+        }
+
+        /**
+         * Resets the game data and local storage.
+         */
+        function resetGame() {
+            window.confirm('Are you sure you want to reset ALL game data (all players\' scores, levels, and settings)? This cannot be undone.')
+                .then(result => {
+                    if (result) {
+                        playerName = '';
+                        currentLevel = 1;
+                        coins = 0;
+                        correctStreak = 0;
+                        multiplierRange = MASTERY_LEVELS['Master'].multiplier;
+                        multiplicandRange = MASTERY_LEVELS['Master'].multiplicand;
+                        gameTimerDuration = 1;
+                        timeRemaining = 0;
+                        clearInterval(timerInterval);
+                        topScorers = [];
+                        allPlayersData = {};
+
+                        localStorage.removeItem(LOCAL_STORAGE_PLAYER_NAME);
+                        localStorage.removeItem(LOCAL_STORAGE_ALL_PLAYER_DATA);
+                        localStorage.removeItem(LOCAL_STORAGE_TOP_SCORERS);
+
+                        playerNameInput.value = '';
+                        masteryLevel = 'Master'; // Reset mastery level to default
+                        updateTopScorerDisplay();
+                        updateScoreDisplay();
+                        updateSettingsUI();
+                        updateTimerDisplay();
+                        showMessage('All game data has been reset!', 'success');
+                        showScreen(startScreen);
+                    }
+                });
+        }
+
+        /**
+         * Updates the settings UI based on current multiplier/multiplicand ranges and timer duration.
+         */
+        function updateSettingsUI() {
+            // Set mastery level dropdown
+            masteryLevelSelect.value = masteryLevel;
+
+            // Update range inputs and their value displays
+            minMultiplierInput.value = multiplierRange.min;
+            maxMultiplierInput.value = multiplierRange.max;
+            minMultiplicandInput.value = multiplicandRange.min;
+            maxMultiplicandInput.value = multiplicandRange.max;
+            timerDurationInput.value = gameTimerDuration;
+
+            minMultiplierValue.textContent = multiplierRange.min;
+            maxMultiplierValue.textContent = multiplierRange.max;
+            minMultiplicandValue.textContent = multiplicandRange.min;
+            maxMultiplicandValue.textContent = multiplicandRange.max;
+            timerDurationValue.textContent = gameTimerDuration;
+
+            // Enable/disable range sliders based on mastery level
+            const isCustom = masteryLevel === 'Custom';
+            minMultiplierInput.disabled = !isCustom;
+            maxMultiplierInput.disabled = !isCustom;
+            minMultiplicandInput.disabled = !isCustom;
+            maxMultiplicandInput.disabled = !isCustom;
+        }
+
+        // --- Event Listeners ---
+
+        startButton.addEventListener('click', () => {
+            const newPlayerName = playerNameInput.value.trim();
+            if (newPlayerName) {
+                // Always reset current game progress when starting a new game
+                currentLevel = 1;
+                coins = 0;
+                correctStreak = 0;
+
+                // If the player name has changed, update it
+                if (newPlayerName !== playerName) {
+                    playerName = newPlayerName;
+                    showMessage(`Welcome, ${playerName}! Starting a new game.`, 'success');
+                } else {
+                    showMessage(`Welcome back, ${playerName}! Starting a new game.`, 'success');
+                }
+
+                // Apply settings based on selected mastery level
+                if (masteryLevel !== 'Custom') {
+                    multiplierRange = MASTERY_LEVELS[masteryLevel].multiplier;
+                    multiplicandRange = MASTERY_LEVELS[masteryLevel].multiplicand;
+                }
+                // If Custom, multiplierRange and multiplicandRange already hold the slider values from settings screen
+
+                timeRemaining = gameTimerDuration * 60;
+                updateTimerDisplay();
+
+                saveGameData();
+                showScreen(gameScreen);
+                generateQuestion();
+                updateScoreDisplay();
+                startTimer();
+            } else {
+                showMessage('Please enter your name to start!', 'error');
+            }
+        });
+
+        settingsButton.addEventListener('click', () => {
+            updateSettingsUI();
+            showScreen(settingsScreen);
+        });
+
+        resetButton.addEventListener('click', resetGame);
+
+        backToStartButton.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            updateTopScorers();
+            saveGameData();
+            showScreen(startScreen);
+        });
+
+        saveSettingsButton.addEventListener('click', () => {
+            const newMinMultiplier = parseInt(minMultiplierInput.value);
+            const newMaxMultiplier = parseInt(maxMultiplierInput.value);
+            const newMinMultiplicand = parseInt(minMultiplicandInput.value);
+            const newMaxMultiplicand = parseInt(maxMultiplicandInput.value);
+            const newTimerDuration = parseInt(timerDurationInput.value);
+
+            if (newMinMultiplier > newMaxMultiplier || newMinMultiplicand > newMaxMultiplicand) {
+                showMessage('Min value cannot be greater than Max value!', 'error');
+                return;
+            }
+
+            // If mastery level is Custom, save the current slider values
+            if (masteryLevel === 'Custom') {
+                multiplierRange.min = newMinMultiplier;
+                multiplierRange.max = newMaxMultiplier;
+                multiplicandRange.min = newMinMultiplicand;
+                multiplicandRange.max = newMaxMultiplicand;
+            }
+            gameTimerDuration = newTimerDuration;
+
+            saveGameData();
+            showMessage('Settings saved!', 'success');
+            showScreen(startScreen);
+        });
+
+        backFromSettingsButton.addEventListener('click', () => {
+            // When returning from settings, reload the current player's data
+            // to ensure settings are consistent with what was saved or what the mastery level dictates.
+            loadGameData();
+            showScreen(startScreen);
+        });
+
+        // Event listener for Mastery Level dropdown change
+        masteryLevelSelect.addEventListener('change', (event) => {
+            masteryLevel = event.target.value;
+            if (masteryLevel !== 'Custom') {
+                // Apply preset ranges
+                multiplierRange = MASTERY_LEVELS[masteryLevel].multiplier;
+                multiplicandRange = MASTERY_LEVELS[masteryLevel].multiplicand;
+            }
+            updateSettingsUI(); // Update UI and enable/disable sliders
+        });
+
+
+        // Update range value displays dynamically
+        minMultiplierInput.addEventListener('input', () => minMultiplierValue.textContent = minMultiplierInput.value);
+        maxMultiplierInput.addEventListener('input', () => maxMultiplierValue.textContent = maxMultiplierInput.value);
+        minMultiplicandInput.addEventListener('input', () => minMultiplicandValue.textContent = minMultiplicandInput.value);
+        maxMultiplicandInput.addEventListener('input', () => maxMultiplicandValue.textContent = maxMultiplicandInput.value);
+        timerDurationInput.addEventListener('input', () => timerDurationValue.textContent = timerDurationInput.value);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', loadGameData);
+
+        // Custom confirmation dialog (since alert/confirm are blocked in iframe)
+        function confirm(message) {
+            return new Promise((resolve) => {
+                const modalOverlay = document.createElement('div');
+                modalOverlay.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center;
+                    z-index: 1000;
+                `;
+
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                    background: #fff; padding: 30px; border-radius: 10px; text-align: center;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3); color: #333; max-width: 90%;
+                `;
+
+                const messageParagraph = document.createElement('p');
+                messageParagraph.textContent = message;
+                messageParagraph.style.cssText = `margin-bottom: 20px; font-size: 1.1em;`;
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = `display: flex; justify-content: center; gap: 15px;`;
+
+                const yesButton = document.createElement('button');
+                yesButton.textContent = 'Yes';
+                yesButton.classList.add('btn', 'btn-red');
+                yesButton.style.cssText = `margin: 0; padding: 10px 20px;`;
+                yesButton.onclick = () => {
+                    document.body.removeChild(modalOverlay);
+                    resolve(true);
+                };
+
+                const noButton = document.createElement('button');
+                noButton.textContent = 'No';
+                noButton.classList.add('btn');
+                noButton.style.cssText = `margin: 0; padding: 10px 20px;`;
+                noButton.onclick = () => {
+                    document.body.removeChild(modalOverlay);
+                    resolve(false);
+                };
+
+                buttonContainer.appendChild(yesButton);
+                buttonContainer.appendChild(noButton);
+                modalContent.appendChild(messageParagraph);
+                modalContent.appendChild(buttonContainer);
+                modalOverlay.appendChild(modalContent);
+                document.body.appendChild(modalOverlay);
+            });
+        }
+
+        window.confirm = confirm;
+    </script>
+</body>
+</html>
