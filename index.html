@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Master</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fredoka One font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js CDN for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka One', sans-serif;
+            background: linear-gradient(to right, #DAA520 0%, #FFD700 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+            color: #fff;
+            position: relative;
+        }
+
+        .app-container {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            
+            /* Aspect Ratio and Sizing */
+            width: 100%;
+            max-width: min(450px, 90vw);
+            height: auto;
+            aspect-ratio: 9 / 16;
+            max-height: 95vh;
+
+            text-align: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 5;
+        }
+        .screen.active {
+            display: flex; /* Use flex to structure screen content */
+            flex-direction: column;
+        }
+
+        /* Home Screen Styles */
+        .home-screen-layout {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .title-header {
+             padding-top: 3rem; /* Increased padding */
+        }
+        .title-3d {
+            color: #fff;
+            text-shadow: 1px 1px 0px #d4af37, 2px 2px 0px #b8860b, 3px 3px 0px #805500, 4px 4px 5px rgba(0,0,0,0.5);
+        }
+
+        .corner-icon {
+            position: absolute;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.3s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        .corner-icon:hover {
+            transform: scale(1.15) rotate(-5deg);
+        }
+        #infoButton { top: 1.5rem; left: 1.5rem; color: #3b82f6; }
+        #settingsButton { top: 1.5rem; right: 1.5rem; color: #22c55e; }
+        #speakerButton { bottom: 1.5rem; left: 1.5rem; color: #ef4444; }
+        #leaderboardButton { bottom: 1.5rem; right: 1.5rem; color: #8b5cf6; }
+
+        #playerNameDisplayContainer {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 10px;
+            transition: background-color 0.2s;
+        }
+        #playerNameDisplayContainer:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        #playerNameDisplay {
+            font-size: clamp(1.75rem, 8vw, 3rem);
+            font-weight: 400;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+            min-height: 50px;
+            word-break: break-all;
+        }
+
+        .difficulty-selector {
+            margin: 1rem 0;
+            cursor: pointer;
+        }
+        
+        #difficultyDisplay {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            font-weight: 400;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        #difficultyDisplay:hover {
+            transform: scale(1.05);
+        }
+        #difficultyIcon {
+            font-size: clamp(4rem, 15vw, 6rem);
+            margin: 0.5rem 0;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .level-change-pop {
+            transform: scale(1.2);
+        }
+
+
+        .play-button, .action-button {
+            background-color: #22c55e;
+            color: white;
+            font-weight: 400;
+            font-size: clamp(1.5rem, 6vw, 2.25rem);
+            padding: 0.75em 1.5em;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .play-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .play-button:not(:disabled):hover, .action-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        .footer-text {
+            font-size: clamp(0.7rem, 2vw, 0.8rem);
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 1rem;
+        }
+
+        /* Keypad Styles */
+        #keypad {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            padding: 1rem;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            transform: translateY(100%);
+            transition: transform 0.4s ease-in-out;
+            z-index: 100;
+        }
+        #keypad.show {
+            transform: translateY(0);
+        }
+        #keypad-keys {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .keypad-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+        .keypad-btn {
+            padding: 0.75rem 0.25rem;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            font-weight: 400;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            flex-grow: 1;
+        }
+        .keypad-btn:hover {
+            filter: brightness(1.2);
+        }
+        .keypad-btn:active {
+            transform: scale(0.95);
+        }
+        .keypad-btn.red { background-color: #ef4444; }
+        .keypad-btn.green { background-color: #22c55e; }
+        .keypad-btn.blue { background-color: #3b82f6; }
+        .keypad-btn.purple { background-color: #8b5cf6; }
+        .keypad-btn.del { background-color: #6b7280; }
+        .keypad-btn.done { background-color: #10b981; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #fff;
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 90%;
+            width: 450px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        .modal-content h2 {
+            font-size: clamp(1.5rem, 5vw, 1.8rem);
+            margin-bottom: 15px;
+        }
+         .modal-content p {
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .modal-close-btn {
+            margin-top: 20px;
+            background-color: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .modal-close-btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* Game Screen Styles */
+        #gameScreen { flex-direction: column; justify-content: space-between; padding: 2rem 1rem 1rem; }
+        .game-stats { display: flex; justify-content: space-between; align-items: center; font-size: clamp(1.5rem, 5vw, 2rem); padding: 0 0.5rem; }
+        #coin-container, #level-container { position: relative; }
+        .stat-gain-animation {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            animation: floatUp 1.5s ease-out forwards;
+            pointer-events: none;
+        }
+        .coin-gain-animation { color: #22c55e; }
+        .level-up-animation { color: #22c55e; font-size: 1em; }
+        @keyframes floatUp {
+            0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -100px) scale(1.5); opacity: 0; }
+        }
+
+        .question-box { background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 1rem; margin: 1rem 0; }
+        #questionDisplay { font-size: clamp(2rem, 10vw, 3.5rem); text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); margin-bottom: 0.5rem; }
+        #timerDisplay { font-size: clamp(1.25rem, 6vw, 2rem); color: #FFA500; }
+        .choices-box { background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 1rem; margin-top: auto; }
+        #choicesContainer { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+        @media (min-width: 380px) { #choicesContainer { grid-template-columns: repeat(3, 1fr); } }
+        .choice-btn {
+            background-color: #8b5cf6;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            border: 2px solid #3b82f6;
+            font-size: clamp(1rem, 5vw, 1.5rem);
+            transition: all 0.2s;
+        }
+        .choice-btn:hover { background-color: #7c3aed; transform: scale(1.05); }
+        .choice-btn.correct { background-color: #22c55e; border-color: #16a34a; }
+        .choice-btn.incorrect { background-color: #ef4444; border-color: #dc2626; }
+        .message-box {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 1rem;
+            min-height: 3rem;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        .message-box.show { opacity: 1; visibility: visible; }
+        .btn {
+             background-color: #3b82f6;
+             color: white;
+             padding: 0.75rem 1.5rem;
+             border-radius: 0.75rem;
+             border: none;
+             font-size: clamp(1rem, 4vw, 1.25rem);
+        }
+        
+        /* Leaderboard & Settings Styles */
+        #leaderboardScreen, #settingsScreen { padding: 2rem 1rem 1rem; }
+        .leaderboard-table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
+        .leaderboard-table th, .leaderboard-table td { padding: 0.75rem; text-align: left; }
+        .leaderboard-table thead { background-color: rgba(0,0,0,0.2); }
+        .leaderboard-table tbody tr:nth-child(even) { background-color: rgba(0,0,0,0.1); }
+        .leaderboard-table td { font-size: clamp(0.9rem, 3vw, 1.1rem); }
+        .leaderboard-table .rank { text-align: center; }
+        .leaderboard-table .name { width: 50%; }
+        .leaderboard-table .level, .leaderboard-table .coins { text-align: center; }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Persistent Corner Icons -->
+        <i id="infoButton" class="fas fa-info-circle corner-icon"></i>
+        <i id="settingsButton" class="fas fa-cog corner-icon"></i>
+        <i id="speakerButton" class="fas fa-volume-mute corner-icon"></i>
+        <i id="leaderboardButton" class="fas fa-trophy corner-icon"></i>
+
+        <!-- Home Screen -->
+        <div id="homeScreen" class="screen active">
+            <div class="home-screen-layout">
+                <header class="title-header">
+                    <h1 class="text-4xl font-bold title-3d" style="font-size: clamp(2rem, 8vw, 2.5rem);">Multiplication Master</h1>
+                </header>
+
+                <main>
+                    <div id="playerNameDisplayContainer">
+                        <p id="playerNameDisplay">Enter Name</p>
+                    </div>
+                    
+                    <div class="difficulty-selector">
+                        <div id="difficultyDisplay">
+                            <div id="difficultyIcon">👶</div>
+                            <div id="difficultyText">Beginner</div>
+                        </div>
+                    </div>
+                </main>
+
+                <footer>
+                    <button id="playButton" class="play-button" disabled>Play</button>
+                    <p class="footer-text">Cali Stacy &copy; 2025</p>
+                </footer>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+             <div class="game-stats">
+                <p id="level-container">x<span id="currentLevelDisplay">1</span></p>
+                <p id="coin-container"><span id="coinsDisplay">0</span> 🟡</p>
+            </div>
+            <div class="question-box">
+                <p id="questionDisplay">?</p>
+                <p id="timerDisplay">01:00</p>
+            </div>
+            <div class="choices-box">
+                <div id="choicesContainer"></div>
+            </div>
+            <div id="messageBox"></div>
+            <footer class="mt-auto">
+                <button id="gameScreenBackButton" class="action-button bg-blue-600 hover:bg-blue-700">Back</button>
+                <p class="footer-text">Multiplication Master</p>
+            </footer>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen">
+            <h2 class="text-3xl mb-6 text-white">Settings</h2>
+             <div class="mb-6">
+                <label for="timerDurationInput" class="block text-lg mb-2">Game Duration (minutes): <span id="timerDurationValue">1</span></label>
+                <input type="range" id="timerDurationInput" min="1" max="10" value="1" class="w-full mb-4">
+             </div>
+             <footer class="mt-auto">
+                <button id="settingsScreenBackButton" class="action-button bg-blue-600 hover:bg-blue-700">Back</button>
+             </footer>
+        </div>
+        
+        <!-- Leaderboard Screen -->
+        <div id="leaderboardScreen" class="screen">
+            <h2 class="text-3xl mb-4 text-white title-3d">Leaderboard</h2>
+            <div class="w-full overflow-y-auto">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th class="rank">#</th>
+                            <th class="name">Name</th>
+                            <th class="level">Level</th>
+                            <th class="coins">Coins</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <!-- Scores will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+             <footer class="mt-auto">
+                <button id="leaderboardScreenBackButton" class="action-button bg-blue-600 hover:bg-blue-700">Back</button>
+             </footer>
+        </div>
+
+        <!-- Keypad (Now inside app-container) -->
+        <div id="keypad">
+            <div id="keypad-keys">
+                <!-- Keys will be generated by JS -->
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button class="keypad-btn del" id="keypad-del">DEL</button>
+                <button class="keypad-btn done" id="keypad-done">DONE</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Multiplication Master 🧙✨</h2>
+            <p>Solve multiplication problems to earn shiny coins and set your first high score. Keep practicing to beat your best score with every new game you play!</p>
+            <p><strong>Created by:</strong><br>Cali Stacy E. Javillonar (Primary 3)<br>(Jr. Prompt Engineer)</p>
+            <button class="modal-close-btn" id="infoModalClose">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const homeScreen = document.getElementById('homeScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const settingsScreen = document.getElementById('settingsScreen');
+        const leaderboardScreen = document.getElementById('leaderboardScreen');
+        
+        // Home Screen Elements
+        const playerNameDisplayContainer = document.getElementById('playerNameDisplayContainer');
+        const playerNameDisplay = document.getElementById('playerNameDisplay');
+        const difficultyDisplay = document.getElementById('difficultyDisplay');
+        const difficultyIcon = document.getElementById('difficultyIcon');
+        const difficultyText = document.getElementById('difficultyText');
+        const playButton = document.getElementById('playButton');
+        const infoButton = document.getElementById('infoButton');
+        const settingsButton = document.getElementById('settingsButton');
+        const speakerButton = document.getElementById('speakerButton');
+        const leaderboardButton = document.getElementById('leaderboardButton');
+        
+        // Keypad Elements
+        const keypad = document.getElementById('keypad');
+        const keypadKeys = document.getElementById('keypad-keys');
+        const keypadDel = document.getElementById('keypad-del');
+        const keypadDone = document.getElementById('keypad-done');
+
+        // Modal Elements
+        const infoModal = document.getElementById('infoModal');
+        const infoModalClose = document.getElementById('infoModalClose');
+
+        // Game Screen Elements
+        const currentLevelDisplay = document.getElementById('currentLevelDisplay');
+        const levelContainer = document.getElementById('level-container');
+        const coinsDisplay = document.getElementById('coinsDisplay');
+        const coinContainer = document.getElementById('coin-container');
+        const questionDisplay = document.getElementById('questionDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const choicesContainer = document.getElementById('choicesContainer');
+        const messageBox = document.getElementById('messageBox');
+        const gameScreenBackButton = document.getElementById('gameScreenBackButton');
+
+        // Settings Screen Elements
+        const timerDurationInput = document.getElementById('timerDurationInput');
+        const timerDurationValue = document.getElementById('timerDurationValue');
+        const settingsScreenBackButton = document.getElementById('settingsScreenBackButton');
+
+        // Leaderboard Elements
+        const leaderboardBody = document.getElementById('leaderboardBody');
+        const leaderboardScreenBackButton = document.getElementById('leaderboardScreenBackButton');
+
+        // --- Game State & Config ---
+        let playerName = '';
+        let currentLevel = 1;
+        let coins = 0;
+        let correctStreak = 0;
+        let gameTimerDuration = 1; // Default 1 minute
+        let timeRemaining = 0;
+        let timerInterval = null;
+        let isMusicPlaying = false;
+        let currentQuestion = {};
+        let leaderboardData = [];
+        let correctSynth, wrongSynth, competitiveSynth, musicLoop, victorySynth;
+        let bpmInterval = null;
+        let previousScreen = null;
+        let isGameOver = false;
+
+        const difficultyLevels = [
+            { name: 'Beginner', icon: '👶', range: { min: 0, max: 3 } },
+            { name: 'Intermediate', icon: '🧑‍🎓', range: { min: 0, max: 6 } },
+            { name: 'Master', icon: '🧙', range: { min: 0, max: 9 } }
+        ];
+        let currentDifficultyIndex = 0;
+
+        const endOfGameMessages = [
+            'Math wizard! 🧙',
+            'You got it! ✨',
+            'Brilliant! 💡',
+            'Super smart! �',
+            'Excellent work! ⭐'
+        ];
+
+        // --- Local Storage Keys ---
+        const LS_PLAYER_NAME = 'mm_playerName';
+        const LS_DIFFICULTY = 'mm_difficulty';
+        const LS_MUSIC_STATE = 'mm_musicState';
+        const LS_TIMER_DURATION = 'mm_timerDuration';
+        const LS_LEADERBOARD = 'mm_leaderboard';
+
+        // --- Helper Functions ---
+        function showScreen(screenToShow) {
+            [homeScreen, gameScreen, settingsScreen, leaderboardScreen].forEach(s => s.classList.remove('active'));
+            screenToShow.classList.add('active');
+
+            // Manage icon visibility
+            if (screenToShow === homeScreen) {
+                settingsButton.style.display = 'block';
+                leaderboardButton.style.display = 'block';
+            } else if (screenToShow === gameScreen) {
+                settingsButton.style.display = 'none';
+                leaderboardButton.style.display = 'block';
+            }
+            else {
+                settingsButton.style.display = 'none';
+                leaderboardButton.style.display = 'none';
+            }
+        }
+
+        function updateDifficultyDisplay() {
+            const level = difficultyLevels[currentDifficultyIndex];
+            difficultyIcon.textContent = level.icon;
+            difficultyText.textContent = level.name;
+        }
+        
+        function triggerDifficultyAnimation() {
+            difficultyIcon.classList.add('level-change-pop');
+            setTimeout(() => {
+                difficultyIcon.classList.remove('level-change-pop');
+            }, 300);
+        }
+
+        function updatePlayerNameDisplay() {
+            if (playerName) {
+                playerNameDisplay.textContent = playerName;
+                playButton.disabled = false;
+            } else {
+                playerNameDisplay.textContent = 'Enter Name';
+                playButton.disabled = true;
+            }
+        }
+        
+        function updateSpeakerIcon() {
+            speakerButton.className = `fas ${isMusicPlaying ? 'fa-volume-up' : 'fa-volume-mute'} corner-icon`;
+        }
+        
+        function showMessage(message, type, duration = 1500) {
+            messageBox.textContent = message;
+            messageBox.className = 'message-box'; // Reset classes
+            if (type === 'success') messageBox.classList.add('bg-green-500', 'bg-opacity-75');
+            else if (type === 'error') messageBox.classList.add('bg-red-500', 'bg-opacity-75');
+            messageBox.classList.add('show');
+            if (duration) {
+                setTimeout(() => {
+                    messageBox.classList.remove('show');
+                }, duration);
+            }
+        }
+
+        // --- Keypad Logic ---
+        function generateKeypad() {
+            const qwertyRows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+            const vowels = 'AEIOU';
+            const consonantColors = ['green', 'blue', 'purple'];
+            let consonantColorIndex = 0;
+
+            keypadKeys.innerHTML = ''; // Clear previous keys
+
+            qwertyRows.forEach(rowString => {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('keypad-row');
+
+                rowString.split('').forEach(char => {
+                    const key = document.createElement('button');
+                    key.textContent = char;
+                    
+                    let keyColorClass = '';
+                    if (vowels.includes(char)) {
+                        keyColorClass = 'red';
+                    } else {
+                        keyColorClass = consonantColors[consonantColorIndex];
+                        consonantColorIndex = (consonantColorIndex + 1) % consonantColors.length;
+                    }
+                    
+                    key.classList.add('keypad-btn', keyColorClass);
+
+                    key.addEventListener('click', () => {
+                        if (playerName.length < 10) {
+                            playerName += char;
+                            updatePlayerNameDisplay();
+                        }
+                    });
+                    rowDiv.appendChild(key);
+                });
+                keypadKeys.appendChild(rowDiv);
+            });
+        }
+        
+        // --- Game Logic ---
+        function triggerCoinAnimation() {
+            const gainAnimation = document.createElement('span');
+            gainAnimation.textContent = `+${currentLevel}`;
+            gainAnimation.className = 'stat-gain-animation coin-gain-animation';
+            coinContainer.appendChild(gainAnimation);
+            setTimeout(() => {
+                gainAnimation.remove();
+            }, 1500);
+        }
+        
+        function triggerLevelUpAnimation() {
+            const levelAnimation = document.createElement('span');
+            levelAnimation.textContent = `Level Up!`;
+            levelAnimation.className = 'stat-gain-animation level-up-animation';
+            levelContainer.appendChild(levelAnimation);
+            setTimeout(() => {
+                levelAnimation.remove();
+            }, 1500);
+        }
+
+        function generateQuestion() {
+            const { range } = difficultyLevels[currentDifficultyIndex];
+            const factor1 = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+            const factor2 = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+            const answer = factor1 * factor2;
+
+            currentQuestion = { factor1, factor2, answer };
+            questionDisplay.textContent = `${factor1} x ${factor2} = ?`;
+
+            const choices = new Set([answer]);
+            while (choices.size < 3) {
+                const offset = Math.floor(Math.random() * 10) - 5;
+                choices.add(Math.max(0, answer + offset));
+            }
+            
+            const shuffledChoices = Array.from(choices).sort(() => Math.random() - 0.5);
+            renderChoices(shuffledChoices);
+        }
+
+        function renderChoices(choicesArray) {
+            choicesContainer.innerHTML = '';
+            choicesArray.forEach(choice => {
+                const button = document.createElement('button');
+                button.textContent = choice;
+                button.classList.add('choice-btn');
+                button.addEventListener('click', () => checkAnswer(choice, button));
+                choicesContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedAnswer, clickedButton) {
+            if(isGameOver) return;
+            choicesContainer.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+            if (selectedAnswer === currentQuestion.answer) {
+                triggerCoinAnimation();
+                coins += currentLevel;
+                correctStreak++;
+                showMessage('Correct', 'success');
+                clickedButton.classList.add('correct');
+                correctSynth.triggerAttackRelease("C5", "8n", Tone.now());
+                correctSynth.triggerAttackRelease("E5", "8n", Tone.now() + 0.1);
+                correctSynth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+
+                if (correctStreak > 0 && correctStreak % 5 === 0) {
+                    currentLevel++;
+                    triggerLevelUpAnimation();
+                    showMessage(`Multiplier is now x${currentLevel}!`, 'success');
+                }
+            } else {
+                correctStreak = 0;
+                showMessage('Wrong', 'error');
+                clickedButton.classList.add('incorrect');
+                wrongSynth.triggerAttackRelease("G3", "8n", Tone.now());
+                wrongSynth.triggerAttackRelease("E3", "8n", Tone.now() + 0.1);
+            }
+            updateScoreDisplay();
+            setTimeout(generateQuestion, 1000);
+        }
+
+        function updateScoreDisplay() {
+            currentLevelDisplay.textContent = currentLevel;
+            coinsDisplay.textContent = coins;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeRemaining = gameTimerDuration * 60;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function endGame() {
+            isGameOver = true;
+            updateLeaderboard();
+            const randomMessage = endOfGameMessages[Math.floor(Math.random() * endOfGameMessages.length)];
+            showMessage(randomMessage, 'success', null); // Show message and keep it
+            choicesContainer.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+            
+            // Stop music on game end
+            if (Tone.Transport.state === 'started') {
+                Tone.Transport.stop();
+                musicLoop.stop();
+                if(isMusicPlaying) {
+                    victorySynth.triggerAttackRelease("C5", "16n", Tone.now());
+                    victorySynth.triggerAttackRelease("C5", "16n", Tone.now() + 0.1);
+                    victorySynth.triggerAttackRelease("C5", "16n", Tone.now() + 0.2);
+                    victorySynth.triggerAttackRelease("C5", "16n", Tone.now() + 0.3);
+                    victorySynth.triggerAttackRelease("G#4", "8n", Tone.now() + 0.4);
+                    victorySynth.triggerAttackRelease("A#4", "8n", Tone.now() + 0.6);
+                    victorySynth.triggerAttackRelease("C5", "4n", Tone.now() + 0.8);
+                }
+            }
+            clearInterval(bpmInterval);
+            Tone.Transport.bpm.value = 90; // Reset BPM
+        }
+        
+        function toggleMusic() {
+            isMusicPlaying = !isMusicPlaying;
+            updateSpeakerIcon();
+            localStorage.setItem(LS_MUSIC_STATE, isMusicPlaying);
+
+            if (gameScreen.classList.contains('active') && !isGameOver) {
+                 if (isMusicPlaying && Tone.Transport.state !== 'started') {
+                    Tone.Transport.start();
+                    musicLoop.start(0);
+                } else if (!isMusicPlaying && Tone.Transport.state === 'started') {
+                    Tone.Transport.stop();
+                    musicLoop.stop();
+                }
+            }
+        }
+
+        // --- Leaderboard Logic ---
+        function updateLeaderboard() {
+            const icon = difficultyLevels[currentDifficultyIndex].icon;
+            leaderboardData.push({ name: playerName, level: currentLevel, coins: coins, icon: icon });
+            
+            // Sort by coins and save
+            leaderboardData.sort((a, b) => b.coins - a.coins);
+
+            // Keep only top 10
+            if(leaderboardData.length > 10) {
+                leaderboardData = leaderboardData.slice(0, 10);
+            }
+
+            localStorage.setItem(LS_LEADERBOARD, JSON.stringify(leaderboardData));
+        }
+
+        function displayLeaderboard() {
+            leaderboardBody.innerHTML = '';
+            leaderboardData.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="rank">${index + 1}</td>
+                    <td class="name">${player.icon || '❔'} ${player.name}</td>
+                    <td class="level">${player.level}</td>
+                    <td class="coins">${player.coins}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        // --- Initialization ---
+        function init() {
+            // --- Tone.js Setup ---
+            correctSynth = new Tone.FMSynth({
+                harmonicity: 8,
+                modulationIndex: 2,
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
+            }).toDestination();
+            
+            wrongSynth = new Tone.Synth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.1 }
+            }).toDestination();
+            
+            victorySynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 },
+                volume: -10
+            }).toDestination();
+
+            competitiveSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "square" },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.1 },
+                volume: -16
+            }).toDestination();
+
+            const hammerThemeNotes = [
+                "C5", "C5", "C5", "C5", "C5", "C5", "C5", "C5",
+                "E5", "E5", "E5", "E5", "E5", "E5", "G5", "G5"
+            ];
+
+            musicLoop = new Tone.Sequence((time, note) => {
+                competitiveSynth.triggerAttackRelease(note, "16n", time);
+            }, hammerThemeNotes, "16n");
+            
+            Tone.Transport.bpm.value = 90; // Start at 90 BPM
+
+            playerName = localStorage.getItem(LS_PLAYER_NAME) || '';
+            currentDifficultyIndex = parseInt(localStorage.getItem(LS_DIFFICULTY)) || 0;
+            isMusicPlaying = localStorage.getItem(LS_MUSIC_STATE) === 'true';
+            gameTimerDuration = parseInt(localStorage.getItem(LS_TIMER_DURATION)) || 1;
+            leaderboardData = JSON.parse(localStorage.getItem(LS_LEADERBOARD)) || [];
+
+            updatePlayerNameDisplay();
+            updateDifficultyDisplay();
+            updateSpeakerIcon();
+            
+            timerDurationInput.value = gameTimerDuration;
+            timerDurationValue.textContent = gameTimerDuration;
+            
+            generateKeypad();
+            showScreen(homeScreen);
+        }
+
+        // --- Event Listeners ---
+        playerNameDisplayContainer.addEventListener('click', () => keypad.classList.add('show'));
+        keypadDel.addEventListener('click', () => {
+            playerName = playerName.slice(0, -1);
+            updatePlayerNameDisplay();
+        });
+        keypadDone.addEventListener('click', () => {
+            keypad.classList.remove('show');
+            if(playerName) localStorage.setItem(LS_PLAYER_NAME, playerName);
+        });
+
+        difficultyDisplay.addEventListener('click', () => {
+            currentDifficultyIndex = (currentDifficultyIndex + 1) % difficultyLevels.length;
+            updateDifficultyDisplay();
+            triggerDifficultyAnimation();
+            localStorage.setItem(LS_DIFFICULTY, currentDifficultyIndex);
+        });
+
+        playButton.addEventListener('click', () => {
+            isGameOver = false;
+            currentLevel = 1;
+            coins = 0;
+            correctStreak = 0;
+            updateScoreDisplay();
+            showScreen(gameScreen);
+            generateQuestion();
+            startTimer();
+
+            if (isMusicPlaying) {
+                Tone.start().then(() => {
+                    Tone.Transport.start();
+                    musicLoop.start(0);
+                    clearInterval(bpmInterval);
+                    bpmInterval = setInterval(() => {
+                        if (Tone.Transport.bpm.value < 180) {
+                            Tone.Transport.bpm.value += 1;
+                        }
+                    }, 2000);
+                });
+            }
+        });
+        
+        gameScreenBackButton.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            updateLeaderboard();
+            showScreen(homeScreen);
+            // Stop music when going back
+            if (Tone.Transport.state === 'started') {
+                Tone.Transport.stop();
+                musicLoop.stop();
+            }
+            clearInterval(bpmInterval);
+            Tone.Transport.bpm.value = 90; // Reset BPM
+        });
+
+        // Corner Icons
+        infoButton.addEventListener('click', () => infoModal.classList.add('show'));
+        infoModalClose.addEventListener('click', () => infoModal.classList.remove('show'));
+        settingsButton.addEventListener('click', () => {
+            previousScreen = homeScreen;
+            showScreen(settingsScreen);
+        });
+        leaderboardButton.addEventListener('click', () => {
+            if (homeScreen.classList.contains('active')) {
+                previousScreen = homeScreen;
+            } else if (gameScreen.classList.contains('active')) {
+                previousScreen = gameScreen;
+            }
+            displayLeaderboard();
+            showScreen(leaderboardScreen);
+        });
+        speakerButton.addEventListener('click', toggleMusic);
+        
+        // Settings
+        settingsScreenBackButton.addEventListener('click', () => {
+            showScreen(homeScreen);
+        });
+        
+        leaderboardScreenBackButton.addEventListener('click', () => {
+            showScreen(previousScreen || homeScreen);
+        });
+
+        timerDurationInput.addEventListener('input', (e) => {
+            gameTimerDuration = parseInt(e.target.value);
+            timerDurationValue.textContent = gameTimerDuration;
+            localStorage.setItem(LS_TIMER_DURATION, gameTimerDuration);
+        });
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+�
