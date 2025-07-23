@@ -1,0 +1,36 @@
+# Jekyll configuration for GitHub Pages
+# This ensures proper serving of static files
+
+# Site settings
+title: "Multiplication Master"
+description: "A fun educational multiplication practice game"
+author: "Cali Stacy E. Javillonar"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude from processing
+exclude:
+  - README.md
+  - .gitignore
+  - .github/
+  - LICENSE
+
+# Include files
+include:
+  - index.html
+
+# Collections
+collections:
+  data:
+    output: true
+    permalink: /:collection/:name
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default" 
