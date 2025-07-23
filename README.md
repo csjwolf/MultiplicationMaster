@@ -1,6 +1,6 @@
 # Multiplication Master 🧮
 
-A fun and educational multiplication practice game designed for primary school students to improve their math skills through interactive gameplay.
+A fun and educational multiplication master game designed for primary school students to improve their math skills through interactive gameplay.
 
 ## 🎮 About the Game
 
