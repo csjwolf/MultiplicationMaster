@@ -188,8 +188,13 @@
             </div>
         </div>
 
-        <footer class="mt-8 text-sm text-white text-opacity-70">
-            Created by Cali Stacy E. Javillonar, Primary 3, made on July 22 2025.
+
+
+        <footer class="mt-8 text-sm text-white text-opacity-70 text-center">
+            <div class="mb-1">Created by:</div>
+            <div class="mb-1 font-semibold">Cali Stacy E. Javillonar (Primary 3)</div>
+            <div class="mb-2 text-xs">(Jr. Prompt Engineer)</div>
+            <div class="text-xs">© Copyright July 22, 2025</div>
         </footer>
     </div>
 
@@ -370,6 +375,8 @@
                 topScorerList.appendChild(listItem);
             }
         }
+
+
 
         /**
          * Updates the top scorers array and saves to local storage.
@@ -723,6 +730,8 @@
         minMultiplicandInput.addEventListener('input', () => minMultiplicandValue.textContent = minMultiplicandInput.value);
         maxMultiplicandInput.addEventListener('input', () => maxMultiplicandValue.textContent = maxMultiplicandInput.value);
         timerDurationInput.addEventListener('input', () => timerDurationValue.textContent = timerDurationInput.value);
+
+
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', loadGameData);
