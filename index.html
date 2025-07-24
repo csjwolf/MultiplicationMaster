@@ -534,7 +534,7 @@
             'Math wizard! 🧙',
             'You got it! ✨',
             'Brilliant! 💡',
-            'Super smart! �',
+            'Super smart! 🧠',
             'Excellent work! ⭐'
         ];
 
@@ -774,19 +774,23 @@
         }
         
         function toggleMusic() {
-            isMusicPlaying = !isMusicPlaying;
-            updateSpeakerIcon();
-            localStorage.setItem(LS_MUSIC_STATE, isMusicPlaying);
-
-            if (gameScreen.classList.contains('active') && !isGameOver) {
-                 if (isMusicPlaying && Tone.Transport.state !== 'started') {
-                    Tone.Transport.start();
-                    musicLoop.start(0);
-                } else if (!isMusicPlaying && Tone.Transport.state === 'started') {
-                    Tone.Transport.stop();
-                    musicLoop.stop();
+            // This function now uses Tone.start() to ensure audio context is running
+            Tone.start().then(() => {
+                isMusicPlaying = !isMusicPlaying;
+                updateSpeakerIcon();
+                localStorage.setItem(LS_MUSIC_STATE, isMusicPlaying);
+        
+                // Only try to play/stop music if the game is actually running
+                if (gameScreen.classList.contains('active') && !isGameOver) {
+                    if (isMusicPlaying && Tone.Transport.state !== 'started') {
+                        Tone.Transport.start();
+                        musicLoop.start(0);
+                    } else if (!isMusicPlaying && Tone.Transport.state === 'started') {
+                        Tone.Transport.stop();
+                        musicLoop.stop();
+                    }
                 }
-            }
+            });
         }
 
         // --- Leaderboard Logic ---
